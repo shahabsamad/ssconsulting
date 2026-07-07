@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DATUM — Civil Engineering Design &amp; Build / GIS Consultancy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDEAE1;
+    --paper-line:#c9c3b4;
+    --ink:#1B2A3D;
+    --ink-soft:#425067;
+    --blue-grid:#AFC1D6;
+    --rust:#B5451E;
+    --contour:#3C6E52;
+    --flood:#3E7CB1;
+    --white:#FBFAF6;
+    --radius:2px;
+  }
+
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:16px;
+    line-height:1.55;
+  }
+  ::selection{background:var(--rust);color:var(--white);}
+
+  h1,h2,h3{
+    font-family:'Big Shoulders Display', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.01em;
+    margin:0;
+    color:var(--ink);
+  }
+
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.72rem;
+    letter-spacing:0.18em;
+    text-transform:uppercase;
+    color:var(--rust);
+  }
+
+  a{color:inherit;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 32px;}
+
+  /* faint blueprint grid used behind sections */
+  .grid-bg{
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size:36px 36px;
+  }
+
+  :focus-visible{outline:2px solid var(--rust);outline-offset:3px;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky;top:0;z-index:50;
+    background:rgba(237,234,225,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--ink);
+  }
+  nav.wrap{
+    display:flex;align-items:center;justify-content:space-between;
+    padding-top:16px;padding-bottom:16px;
+  }
+  .brand{
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .brand-mark{
+    font-family:'Big Shoulders Display',sans-serif;
+    font-weight:800;font-size:1.5rem;letter-spacing:0.04em;
+  }
+  .brand-mark span{color:var(--rust);}
+  nav ul{list-style:none;display:flex;gap:28px;margin:0;padding:0;}
+  nav ul a{
+    text-decoration:none;font-size:0.85rem;font-family:'IBM Plex Mono',monospace;
+    letter-spacing:0.03em;
+    border-bottom:1px solid transparent;
+  }
+  nav ul a:hover{border-bottom-color:var(--rust);}
+  .nav-toggle{display:none;}
+
+  /* ---------- HERO / DRAWING SHEET ---------- */
+  .sheet{
+    position:relative;
+    margin:28px auto 0;
+    max-width:1180px;
+    border:1.5px solid var(--ink);
+    background:var(--white);
+  }
+  .sheet-inner{
+    position:relative;
+    padding:56px 48px 0;
+    min-height:560px;
+    overflow:hidden;
+  }
+  .sheet-grid{
+    position:absolute;inset:0;
+    background-image:
+      linear-gradient(var(--blue-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blue-grid) 1px, transparent 1px);
+    background-size:28px 28px;
+    opacity:0.45;
+    pointer-events:none;
+  }
+  .crosshair{
+    position:absolute;width:22px;height:22px;pointer-events:none;
+  }
+  .crosshair::before,.crosshair::after{
+    content:"";position:absolute;background:var(--ink);
+  }
+  .crosshair::before{width:100%;height:1.5px;top:50%;transform:translateY(-50%);}
+  .crosshair::after{height:100%;width:1.5px;left:50%;transform:translateX(-50%);}
+  .cr-tl{top:18px;left:18px;} .cr-tr{top:18px;right:18px;}
+  .cr-bl{bottom:18px;left:18px;} .cr-br{bottom:18px;right:18px;}
+
+  .hero-content{
+    position:relative;z-index:2;
+    display:grid;grid-template-columns:1.2fr 0.8fr;gap:40px;
+    align-items:start;
+  }
+  .hero-copy .eyebrow{margin-bottom:14px;display:block;}
+  h1.hero-title{
+    font-size:clamp(2.6rem,5.6vw,4.6rem);
+    line-height:0.96;
+    font-weight:800;
+  }
+  h1.hero-title em{
+    font-style:normal;color:var(--rust);
+  }
+  .hero-sub{
+    max-width:44ch;margin-top:20px;color:var(--ink-soft);font-size:1.05rem;
+  }
+  .hero-actions{display:flex;gap:14px;margin-top:32px;flex-wrap:wrap;}
+
+  .btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.82rem;letter-spacing:0.03em;
+    padding:13px 22px;
+    border:1.5px solid var(--ink);
+    background:transparent;
+    text-decoration:none;
+    display:inline-flex;align-items:center;gap:8px;
+    cursor:pointer;
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .btn:hover{background:var(--ink);color:var(--white);}
+  .btn-solid{background:var(--rust);border-color:var(--rust);color:var(--white);}
+  .btn-solid:hover{background:var(--ink);border-color:var(--ink);}
+
+  .north-arrow{width:64px;}
+  .instrument-col{
+    display:flex;flex-direction:column;align-items:flex-end;gap:26px;
+  }
+  .coord-readout{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;color:var(--ink-soft);
+    text-align:right;border:1px solid var(--ink-soft);
+    padding:10px 14px;min-width:190px;
+  }
+  .coord-readout .label{color:var(--rust);display:block;font-size:0.68rem;letter-spacing:0.1em;margin-bottom:4px;}
+  .scale-bar{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+  .scale-bar-graphic{display:flex;height:8px;border:1px solid var(--ink);}
+  .scale-bar-graphic div{width:24px;}
+  .scale-bar-graphic div:nth-child(odd){background:var(--ink);}
+  .scale-bar small{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--ink-soft);}
+
+  /* title block, like a real drawing sheet footer */
+  .title-block{
+    position:relative;z-index:2;
+    margin-top:48px;
+    border-top:1.5px solid var(--ink);
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+  }
+  .title-block div{
+    padding:12px 18px;
+    border-right:1px solid var(--ink);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.7rem;
+    color:var(--ink-soft);
+  }
+  .title-block div:last-child{border-right:none;}
+  .title-block strong{
+    display:block;color:var(--ink);font-size:0.78rem;margin-top:2px;letter-spacing:0.02em;
+  }
+
+  /* ---------- SECTION SCAFFOLD ---------- */
+  section{padding:110px 0;}
+  .section-head{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:24px;margin-bottom:56px;border-bottom:1.5px solid var(--ink);padding-bottom:22px;
+  }
+  .section-head h2{font-size:clamp(2rem,4vw,3rem);}
+  .section-head p{max-width:38ch;color:var(--ink-soft);font-size:0.95rem;margin:0;}
+
+  /* ---------- SERVICES: numbered sheets ---------- */
+  .sheets-grid{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+    border:1.5px solid var(--ink);
+  }
+  .service-sheet{
+    padding:32px 26px;border-right:1px solid var(--ink);position:relative;
+    min-height:280px;display:flex;flex-direction:column;
+  }
+  .service-sheet:last-child{border-right:none;}
+  .service-sheet .num{
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--rust);
+    letter-spacing:0.05em;margin-bottom:18px;
+  }
+  .service-sheet h3{font-size:1.3rem;margin-bottom:12px;line-height:1.05;}
+  .service-sheet p{font-size:0.87rem;color:var(--ink-soft);margin:0;flex-grow:1;}
+  .service-sheet .tag{
+    margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;
+    color:var(--ink-soft);border-top:1px dashed var(--paper-line);padding-top:10px;
+  }
+
+  /* ---------- PROCESS TIMELINE ---------- */
+  .process{
+    display:grid;grid-template-columns:repeat(6,1fr);gap:14px;
+  }
+  .process-step{position:relative;padding-top:26px;}
+  .process-step::before{
+    content:attr(data-n);
+    position:absolute;top:0;left:0;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.72rem;color:var(--rust);
+  }
+  .process-step::after{
+    content:"";position:absolute;top:6px;left:0;right:0;height:1.5px;background:var(--ink);
+  }
+  .process-step h3{font-size:1rem;margin-top:14px;}
+  .process-step p{font-size:0.82rem;color:var(--ink-soft);margin-top:8px;}
+
+  /* ---------- GIS SECTION ---------- */
+  .gis-section{
+    background:var(--ink);color:var(--white);
+  }
+  .gis-section .eyebrow{color:#E2A186;}
+  .gis-section .section-head{border-bottom-color:rgba(251,250,246,0.3);}
+  .gis-section .section-head h2{color:var(--white);}
+  .gis-section .section-head p{color:#C9D2DE;}
+
+  .gis-layout{
+    display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;
+  }
+
+  .layer-panel{
+    background:#22334A;border:1px solid #3A4C66;padding:22px;
+  }
+  .layer-panel .panel-title{
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.08em;
+    color:#9FB0C6;margin-bottom:16px;text-transform:uppercase;
+  }
+  .layer-row{
+    display:flex;align-items:center;gap:10px;padding:9px 0;
+    border-bottom:1px solid #33455F;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;
+  }
+  .layer-row:last-child{border-bottom:none;}
+  .layer-row input{accent-color:var(--rust);width:16px;height:16px;cursor:pointer;}
+  .layer-row label{cursor:pointer;flex-grow:1;}
+  .swatch{width:12px;height:12px;border:1px solid #9FB0C6;flex-shrink:0;}
+
+  .map-frame{
+    position:relative;border:1px solid #3A4C66;background:#182233;
+    aspect-ratio:4/3;overflow:hidden;
+  }
+  .map-frame svg{position:absolute;inset:0;width:100%;height:100%;}
+  .layer-el{transition:opacity 0.35s ease;}
+
+  .gis-services{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+    background:#3A4C66;margin-top:56px;border:1px solid #3A4C66;
+  }
+  .gis-service{background:var(--ink);padding:28px 30px;}
+  .gis-service .eyebrow{color:#E2A186;font-size:0.68rem;}
+  .gis-service h3{color:var(--white);font-size:1.15rem;margin:10px 0 10px;}
+  .gis-service p{color:#C9D2DE;font-size:0.86rem;margin:0;}
+  .tool-pill{
+    display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:0.66rem;
+    border:1px solid #5A6E88;color:#C9D2DE;padding:3px 8px;margin:12px 6px 0 0;
+    letter-spacing:0.04em;
+  }
+
+  /* ---------- CREDENTIALS STRIP ---------- */
+  .strip{
+    border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);
+    padding:30px 0;
+  }
+  .strip .wrap{
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:20px;
+  }
+  .strip-item{font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--ink-soft);}
+  .strip-item strong{display:block;color:var(--ink);font-size:1.5rem;font-family:'Big Shoulders Display',sans-serif;}
+
+  /* ---------- CONTACT ---------- */
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;}
+  .contact-form{display:flex;flex-direction:column;gap:16px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.06em;color:var(--ink-soft);text-transform:uppercase;}
+  .field input,.field textarea,.field select{
+    border:1px solid var(--ink);background:var(--white);
+    padding:11px 12px;font-family:'IBM Plex Sans',sans-serif;font-size:0.92rem;color:var(--ink);
+  }
+  .field textarea{resize:vertical;min-height:100px;}
+  .contact-meta{border-left:1.5px solid var(--ink);padding-left:40px;}
+  .contact-meta h3{font-size:1rem;margin-bottom:6px;}
+  .contact-meta p{color:var(--ink-soft);margin:4px 0 22px;font-size:0.9rem;}
+  .contact-meta a.email{
+    font-family:'IBM Plex Mono',monospace;color:var(--rust);text-decoration:none;font-size:1rem;
+    border-bottom:1px solid var(--rust);
+  }
+
+  footer{
+    background:var(--ink);color:#C9D2DE;padding:28px 0;
+  }
+  footer .wrap{display:flex;justify-content:space-between;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;flex-wrap:wrap;gap:10px;}
+
+  @media (max-width:980px){
+    .hero-content{grid-template-columns:1fr;}
+    .instrument-col{align-items:flex-start;flex-direction:row;flex-wrap:wrap;}
+    .title-block{grid-template-columns:repeat(2,1fr);}
+    .title-block div{border-bottom:1px solid var(--ink);}
+    .sheets-grid{grid-template-columns:repeat(2,1fr);}
+    .service-sheet{border-bottom:1px solid var(--ink);}
+    .process{grid-template-columns:repeat(3,1fr);row-gap:30px;}
+    .gis-layout{grid-template-columns:1fr;}
+    .gis-services{grid-template-columns:1fr;}
+    .contact-grid{grid-template-columns:1fr;}
+    .contact-meta{border-left:none;padding-left:0;border-top:1.5px solid var(--ink);padding-top:24px;}
+    nav ul{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <nav class="wrap">
+    <div class="brand">
+      <div class="brand-mark">DATUM<span>.</span></div>
+    </div>
+    <ul>
+      <li><a href="#services">Design &amp; Build</a></li>
+      <li><a href="#process">Process</a></li>
+      <li><a href="#gis">GIS Consultancy</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+
+  <!-- HERO -->
+  <div class="wrap">
+    <div class="sheet" id="drawing-sheet">
+      <div class="sheet-inner">
+        <div class="sheet-grid"></div>
+        <div class="crosshair cr-tl"></div>
+        <div class="crosshair cr-tr"></div>
+        <div class="crosshair cr-bl"></div>
+        <div class="crosshair cr-br"></div>
+
+        <div class="hero-content">
+          <div class="hero-copy">
+            <span class="eyebrow">Civil Engineering — Design &amp; Build / GIS Consultancy — United Kingdom</span>
+            <h1 class="hero-title">Every project<br>needs a fixed<br><em>point of reference.</em></h1>
+            <p class="hero-sub">DATUM delivers civil engineering design and build for developers, landowners and local authorities across the UK — and provides the geospatial analysis, in QGIS and Google Earth Engine, that grounds each project in real ground conditions.</p>
+            <div class="hero-actions">
+              <a href="#contact" class="btn btn-solid">Start a project</a>
+              <a href="#gis" class="btn">View GIS consultancy</a>
+            </div>
+          </div>
+
+          <div class="instrument-col">
+            <svg class="north-arrow" viewBox="0 0 60 90" fill="none">
+              <polygon points="30,4 42,70 30,58 18,70" fill="#1B2A3D"/>
+              <polygon points="30,4 30,58 18,70" fill="#EDEAE1" stroke="#1B2A3D" stroke-width="1.5"/>
+              <text x="30" y="86" text-anchor="middle" font-family="IBM Plex Mono" font-size="13" fill="#1B2A3D">N</text>
+            </svg>
+
+            <div class="coord-readout" id="coord-readout">
+              <span class="label">Cursor grid ref (OSGB)</span>
+              <span id="coord-value">E 531 400 / N 181 200</span>
+            </div>
+
+            <div class="scale-bar">
+              <div class="scale-bar-graphic">
+                <div></div><div></div><div></div><div></div><div></div><div></div>
+              </div>
+              <small>SCALE 1:1 &nbsp;·&nbsp; 0 &nbsp;—&nbsp; 150m</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="title-block">
+        <div>Project<strong>DATUM — Site Overview</strong></div>
+        <div>Drawn by<strong>Design &amp; Build Div.</strong></div>
+        <div>Checked<strong>GIS Consultancy Div.</strong></div>
+        <div>Drawing no.<strong>DTM-00-001</strong></div>
+        <div>Revision<strong id="rev-value">Rev C — Jul 2026</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SERVICES -->
+  <section id="services" class="grid-bg">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Design &amp; build</h2>
+        <p>Four sheets, one consultancy — from feasibility through to a structure that's actually standing.</p>
+      </div>
+
+      <div class="sheets-grid">
+        <div class="service-sheet">
+          <div class="num">SHEET 01 / 04</div>
+          <h3>Feasibility &amp; Site Assessment</h3>
+          <p>Ground investigation, topographic survey, constraints mapping and outline appraisal, so a scheme is tested against the site before a single line is drawn in earnest.</p>
+          <div class="tag">Site survey · desk study · constraints plan</div>
+        </div>
+        <div class="service-sheet">
+          <div class="num">SHEET 02 / 04</div>
+          <h3>Structural &amp; Civil Design</h3>
+          <p>Foundations, drainage, earthworks and structural detailing developed in step with architects and the client, to Building Regulations and relevant British Standards.</p>
+          <div class="tag">Structures · drainage · SuDS</div>
+        </div>
+        <div class="service-sheet">
+          <div class="num">SHEET 03 / 04</div>
+          <h3>Planning &amp; Approvals</h3>
+          <p>Technical submissions for planning and building control, coordinated with local authority requirements and statutory consultees at every stage.</p>
+          <div class="tag">Planning support · discharge of conditions</div>
+        </div>
+        <div class="service-sheet">
+          <div class="num">SHEET 04 / 04</div>
+          <h3>Construction &amp; Delivery</h3>
+          <p>Site supervision, contractor coordination and as-built verification through to handover, keeping the finished works true to the design.</p>
+          <div class="tag">Site supervision · handover · as-built</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROCESS -->
+  <section id="process">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How a project runs</h2>
+        <p>Six stages, always in this order — each one sets the reference point for the next.</p>
+      </div>
+      <div class="process">
+        <div class="process-step" data-n="01"><h3>Survey</h3><p>Topographic &amp; ground data captured on site.</p></div>
+        <div class="process-step" data-n="02"><h3>Concept</h3><p>Options tested against constraints &amp; brief.</p></div>
+        <div class="process-step" data-n="03"><h3>Detailed design</h3><p>Structural &amp; civil packages finalised.</p></div>
+        <div class="process-step" data-n="04"><h3>Approvals</h3><p>Planning &amp; building control submissions.</p></div>
+        <div class="process-step" data-n="05"><h3>Construction</h3><p>Build phase, supervised on site.</p></div>
+        <div class="process-step" data-n="06"><h3>Handover</h3><p>As-built records &amp; close-out.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- GIS -->
+  <section id="gis" class="gis-section">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow" style="display:block;margin-bottom:10px;">Geospatial analysis</span>
+      </div>
+      <div class="section-head" style="margin-bottom:56px;">
+        <h2>GIS consultancy</h2>
+        <p>QGIS for site-level analysis, Google Earth Engine for wide-area monitoring — layered together to answer questions a single site visit can't.</p>
+      </div>
+
+      <div class="gis-layout">
+        <div class="layer-panel">
+          <div class="panel-title">Layers — Site 04, River Corridor</div>
+          <div class="layer-row">
+            <input type="checkbox" id="layer-basemap" checked>
+            <span class="swatch" style="background:#4A5D74;"></span>
+            <label for="layer-basemap">Basemap (OS / satellite)</label>
+          </div>
+          <div class="layer-row">
+            <input type="checkbox" id="layer-contours" checked>
+            <span class="swatch" style="background:#3C6E52;"></span>
+            <label for="layer-contours">Contours (1m, QGIS)</label>
+          </div>
+          <div class="layer-row">
+            <input type="checkbox" id="layer-flood" checked>
+            <span class="swatch" style="background:#3E7CB1;"></span>
+            <label for="layer-flood">Flood zone 3</label>
+          </div>
+          <div class="layer-row">
+            <input type="checkbox" id="layer-boundary" checked>
+            <span class="swatch" style="background:#B5451E;"></span>
+            <label for="layer-boundary">Site boundary</label>
+          </div>
+        </div>
+
+        <div class="map-frame">
+          <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+            <g id="el-basemap" class="layer-el">
+              <rect width="400" height="300" fill="#182233"/>
+              <path d="M0,210 C60,190 120,230 190,205 C260,180 320,215 400,190 L400,300 L0,300 Z" fill="#233047"/>
+            </g>
+            <g id="el-contours" class="layer-el" stroke="#3C6E52" stroke-width="1.4" fill="none" opacity="0.9">
+              <path d="M-10,60 C80,40 140,90 220,55 C300,25 360,70 410,50"/>
+              <path d="M-10,90 C90,68 150,118 230,86 C300,58 360,96 410,80"/>
+              <path d="M-10,120 C100,96 160,148 240,118 C305,92 360,124 410,112"/>
+              <path d="M-10,150 C110,126 170,176 250,150 C310,126 360,152 410,142"/>
+            </g>
+            <g id="el-flood" class="layer-el" fill="#3E7CB1" opacity="0.55">
+              <path d="M0,210 C60,190 120,230 190,205 C260,180 320,215 400,190 L400,300 L0,300 Z"/>
+            </g>
+            <g id="el-boundary" class="layer-el" fill="none" stroke="#B5451E" stroke-width="2.2" stroke-dasharray="8 5">
+              <polygon points="70,90 300,70 330,190 90,220"/>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="gis-services">
+        <div class="gis-service">
+          <span class="eyebrow">Site-level</span>
+          <h3>Topographic &amp; Constraints Mapping</h3>
+          <p>Survey data processed and modelled in QGIS to produce contours, cut-and-fill volumes and constraints plans that feed straight into the design team's drawings.</p>
+          <span class="tool-pill">QGIS</span><span class="tool-pill">DEM analysis</span>
+        </div>
+        <div class="gis-service">
+          <span class="eyebrow">Site-level</span>
+          <h3>Flood Risk &amp; Drainage Modelling</h3>
+          <p>Watercourse, floodplain and surface-water layers combined to support drainage strategies and flood risk assessments for planning submissions.</p>
+          <span class="tool-pill">QGIS</span><span class="tool-pill">SuDS design</span>
+        </div>
+        <div class="gis-service">
+          <span class="eyebrow">Wide-area</span>
+          <h3>Land Cover &amp; Environmental Monitoring</h3>
+          <p>Satellite time-series in Google Earth Engine tracks vegetation, land cover change and site history over years, ahead of any boots on the ground.</p>
+          <span class="tool-pill">Google Earth Engine</span><span class="tool-pill">Sentinel / Landsat</span>
+        </div>
+        <div class="gis-service">
+          <span class="eyebrow">Wide-area</span>
+          <h3>Utility &amp; Asset Mapping</h3>
+          <p>Existing infrastructure, easements and asset records brought into a single georeferenced dataset, shared with the client and design team as the project evolves.</p>
+          <span class="tool-pill">QGIS</span><span class="tool-pill">Asset registers</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STRIP -->
+  <section class="strip" style="padding:44px 0;">
+    <div class="wrap">
+      <div class="strip-item"><strong>UK-wide</strong>Site &amp; office coverage</div>
+      <div class="strip-item"><strong>QGIS</strong>Open-source GIS, project standard</div>
+      <div class="strip-item"><strong>GEE</strong>Satellite monitoring at scale</div>
+      <div class="strip-item"><strong>2</strong>Divisions, one point of reference</div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="grid-bg">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Start a project</h2>
+        <p>Tell us about the site and what you're trying to find out — design, build, mapping, or all three.</p>
+      </div>
+
+      <div class="contact-grid">
+        <form class="contact-form" onsubmit="return false;">
+          <div class="field">
+            <label for="name">Name</label>
+            <input id="name" type="text" placeholder="Your name" required>
+          </div>
+          <div class="field">
+            <label for="org">Organisation</label>
+            <input id="org" type="text" placeholder="Company or authority (optional)">
+          </div>
+          <div class="field">
+            <label for="topic">Enquiry type</label>
+            <select id="topic">
+              <option>Design &amp; build</option>
+              <option>GIS consultancy</option>
+              <option>Both</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="message">Project details</label>
+            <textarea id="message" placeholder="Site location, stage of the project, and what you need from us"></textarea>
+          </div>
+          <button type="submit" class="btn btn-solid" style="align-self:flex-start;margin-top:6px;">Send enquiry</button>
+        </form>
+
+        <div class="contact-meta">
+          <h3>Direct contact</h3>
+          <p>For project enquiries across design &amp; build or GIS consultancy.</p>
+          <a class="email" href="mailto:hello@datum-consultancy.co.uk">hello@datum-consultancy.co.uk</a>
+
+          <h3 style="margin-top:34px;">Coverage</h3>
+          <p>Site visits and survey work across the UK, with GIS analysis and remote monitoring available for any location.</p>
+
+          <h3 style="margin-top:34px;">Response time</h3>
+          <p>Enquiries are usually answered within two working days.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>© <span id="year"></span> DATUM Civil &amp; GIS Consultancy</span>
+    <span class="mono">DTM-00-001 · Rev C</span>
+  </div>
+</footer>
+
+<script>
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // Coordinate readout follows cursor within the hero sheet, faked as an OSGB-style grid ref
+  const sheet = document.getElementById('drawing-sheet');
+  const coordValue = document.getElementById('coord-value');
+  if (sheet && coordValue) {
+    sheet.addEventListener('mousemove', (e) => {
+      const rect = sheet.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const easting = 531000 + Math.round(x * 3.4);
+      const northing = 181800 - Math.round(y * 3.1);
+      coordValue.textContent = `E ${easting.toLocaleString()} / N ${northing.toLocaleString()}`;
+    });
+    sheet.addEventListener('mouseleave', () => {
+      coordValue.textContent = 'E 531,400 / N 181,200';
+    });
+  }
+
+  // GIS layer toggles
+  const layers = [
+    ['layer-basemap', 'el-basemap'],
+    ['layer-contours', 'el-contours'],
+    ['layer-flood', 'el-flood'],
+    ['layer-boundary', 'el-boundary'],
+  ];
+  layers.forEach(([checkboxId, elId]) => {
+    const checkbox = document.getElementById(checkboxId);
+    const el = document.getElementById(elId);
+    if (checkbox && el) {
+      checkbox.addEventListener('change', () => {
+        el.style.opacity = checkbox.checked ? '' : '0';
+      });
+    }
+  });
+</script>
+
+</body>
+</html>
